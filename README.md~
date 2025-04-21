@@ -1,0 +1,12 @@
+# FastAPI Project Structure Generator
+
+This script generates a clean and organized folder structure for a FastAPI project. It helps you quickly scaffold a new project with the recommended directory layout.
+
+## 📁 Project Structure Created
+
+
+## 🛠 How to Use
+
+1. Run the script:
+   ```bash
+   python generate_structure.py

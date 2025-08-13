@@ -166,7 +166,7 @@ uvicorn app.main:app --reload
 pytest
 ```
         """,
-        "requirements.txt": "fastapi[all]",
+        "requirements.txt": "fastapi[all]\nSQLAlchemy",
         "main.py": (
 "import logging\n"
 "from fastapi import FastAPI, HTTPException, Request, status\n"

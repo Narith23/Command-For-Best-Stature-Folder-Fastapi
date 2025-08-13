@@ -291,7 +291,6 @@ settings = Settings()
             
 """,
         "app/utils/base_response.py": """
-        
 from typing import TypeVar, Generic, Optional, List
 from pydantic import Field
 from pydantic.generics import GenericModel

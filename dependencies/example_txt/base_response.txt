@@ -1,0 +1,137 @@
+from typing import Any, Dict, TypeVar, Generic, Optional, List
+from pydantic import Field
+from pydantic.generics import GenericModel
+
+T = TypeVar("T")
+
+
+# --- Base response model examples ---
+class BaseResponseExample:
+    """Generates standardized response examples for FastAPI documentation."""
+
+    # Standard messages for status codes
+    STATUS_CODE_MAP: Dict[int, str] = {
+        200: "OK",
+        400: "Bad request",
+        401: "Unauthorized",
+        404: "Not found",
+        422: "Unprocessable entity",
+        500: "Internal server error",
+        503: "Service unavailable",
+    }
+
+    def __init__(self, status_code: int = 200, result: Optional[Any] = None):
+        if status_code not in self.STATUS_CODE_MAP:
+            raise ValueError(f"Unsupported status code: {status_code}")
+        self.status_code = status_code
+        self.message = self.STATUS_CODE_MAP[status_code]
+        self.result = result
+
+    def example(self) -> Dict[str, Any]:
+        """Return a FastAPI-compatible response example."""
+        return {
+            "description": self.message,
+            "content": {
+                "application/json": {
+                    "example": {
+                        "status_code": self.status_code,
+                        "message": self.message,
+                        "result": self.result,
+                    }
+                }
+            },
+        }
+
+    @classmethod
+    def example_200(cls, result: Optional[Any] = None) -> Dict[str, Any]:
+        """Shortcut for 200 OK example."""
+        return cls(status_code=200, result=result).example()
+
+    @classmethod
+    def example_400(cls, result: Optional[Any] = None) -> Dict[str, Any]:
+        return cls(status_code=400, result=result).example()
+
+    @classmethod
+    def example_401(cls, result: Optional[Any] = None) -> Dict[str, Any]:
+        return cls(status_code=401, result=result).example()
+
+    @classmethod
+    def example_422(cls, result: Optional[Any] = None) -> Dict[str, Any]:
+        if result is None:
+            result = (
+                [
+                    {
+                        "field": "string",
+                        "message": "string validation failed",
+                    }
+                ],
+            )
+        return cls(status_code=422, result=result).example()
+
+    @classmethod
+    def example_404(cls, result: Optional[Any] = None) -> Dict[str, Any]:
+        return cls(status_code=404, result=result).example()
+
+    @classmethod
+    def example_500(cls, result: Optional[Any] = None) -> Dict[str, Any]:
+        return cls(status_code=500, result=result).example()
+
+    @classmethod
+    def example_503(cls, result: Optional[Any] = None) -> Dict[str, Any]:
+        return cls(status_code=503, result=result).example()
+
+
+# --- Base response model ---
+class BaseResponse(GenericModel, Generic[T]):
+    status_code: int = Field(200, description="HTTP status code")
+    message: str = Field("OK", description="Description or message")
+    result: Optional[T] = Field(None, description="Returned data (if any)")
+
+    @classmethod
+    def success(
+        cls, status_code: int = 200, message: str = "OK", result: Optional[T] = None
+    ) -> "BaseResponse[T]":
+        return cls(status_code=status_code, message=message, result=result)
+
+    @classmethod
+    def error(
+        cls,
+        status_code: int = 400,
+        message: str = "Bad request",
+        result: Optional[T] = None,
+    ) -> "BaseResponse[T]":
+        return cls(status_code=status_code, message=message, result=result)
+
+
+# --- Pagination structure ---
+class PaginationItems(GenericModel, Generic[T]):
+    data: List[T] = Field(default_factory=list, description="Paginated list of items")
+    page: int = Field(..., ge=1, description="Current page number")
+    size: int = Field(..., ge=1, description="Items per page")
+    total: int = Field(..., ge=0, description="Total number of items")
+    pages: int = Field(..., ge=0, description="Total number of pages")
+
+    @classmethod
+    def create(
+        cls, data: List[T], total: int, page: int, size: int
+    ) -> "PaginationItems[T]":
+        pages = (total + size - 1) // size if size else 0
+        return cls(data=data, page=page, size=size, total=total, pages=pages)
+
+
+# --- Response wrapper for paginated items ---
+class PaginatedResponse(GenericModel, Generic[T]):
+    status_code: int = Field(200, description="HTTP status code")
+    message: str = Field("OK", description="Description or message")
+    result: Optional[PaginationItems[T]] = Field(
+        None, description="Paginated result data"
+    )
+
+    @classmethod
+    def success(
+        cls, items: List[T], total: int, page: int, size: int, message: str = "OK"
+    ) -> "PaginatedResponse[T]":
+        pagination = PaginationItems.create(
+            data=items, total=total, page=page, size=size
+        )
+        return cls(status_code=200, message=message, result=pagination)

@@ -1,0 +1,61 @@
+from typing import TypeVar, Generic, Optional, List
+from pydantic import Field
+from pydantic.generics import GenericModel
+
+T = TypeVar("T")
+
+
+# --- Base response model ---
+class BaseResponse(GenericModel, Generic[T]):
+    status_code: int = Field(200, description="HTTP status code")
+    message: str = Field("OK", description="Description or message")
+    result: Optional[T] = Field(None, description="Returned data (if any)")
+
+    @classmethod
+    def success(
+        cls, status_code: int = 200, message: str = "OK", result: Optional[T] = None
+    ) -> "BaseResponse[T]":
+        return cls(status_code=status_code, message=message, result=result)
+
+    @classmethod
+    def error(
+        cls,
+        status_code: int = 400,
+        message: str = "Bad request",
+        result: Optional[T] = None,
+    ) -> "BaseResponse[T]":
+        return cls(status_code=status_code, message=message, result=result)
+
+
+# --- Pagination structure ---
+class PaginationItems(GenericModel, Generic[T]):
+    data: List[T] = Field(default_factory=list, description="Paginated list of items")
+    page: int = Field(..., ge=1, description="Current page number")
+    size: int = Field(..., ge=1, description="Items per page")
+    total: int = Field(..., ge=0, description="Total number of items")
+    pages: int = Field(..., ge=0, description="Total number of pages")
+
+    @classmethod
+    def create(
+        cls, data: List[T], total: int, page: int, size: int
+    ) -> "PaginationItems[T]":
+        pages = (total + size - 1) // size if size else 0
+        return cls(data=data, page=page, size=size, total=total, pages=pages)
+
+
+# --- Response wrapper for paginated items ---
+class PaginatedResponse(GenericModel, Generic[T]):
+    status_code: int = Field(200, description="HTTP status code")
+    message: str = Field("OK", description="Description or message")
+    result: Optional[PaginationItems[T]] = Field(
+        None, description="Paginated result data"
+    )
+
+    @classmethod
+    def success(
+        cls, items: List[T], total: int, page: int, size: int, message: str = "OK"
+    ) -> "PaginatedResponse[T]":
+        pagination = PaginationItems.create(
+            data=items, total=total, page=page, size=size
+        )
+        return cls(status_code=200, message=message, result=pagination)

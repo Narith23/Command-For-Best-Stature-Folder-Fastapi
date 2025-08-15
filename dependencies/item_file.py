@@ -3,7 +3,9 @@ import os
 import shutil
 
 
-def generate_env_file(request_jwt: bool = False, request_db: bool = False) -> str:
+def generate_env_file(
+    request_jwt: bool = False, request_db: bool = False, jwt_secret_key: str = None
+) -> str:
     base_txt = (
         "APP_NAME=FastAPI\n"
         "APP_ENV=development\n"
@@ -15,7 +17,7 @@ def generate_env_file(request_jwt: bool = False, request_db: bool = False) -> st
 
     if request_jwt:
         base_txt = (
-            base_txt + "JWT_SECRET_KEY=your_secret_key\n"
+            base_txt + f"JWT_SECRET_KEY={jwt_secret_key or 'your_secret_key'}\n"
             "JWT_ALGORITHM=HS256\n"
             "JWT_ACCESS_TOKEN_EXPIRES=15\n"
             "JWT_REFRESH_TOKEN_EXPIRES=30\n\n"
@@ -109,5 +111,12 @@ def generate_requirements_file() -> str:
 # Generate Readme file
 def generate_readme_file() -> str:
     src_path = os.path.join("dependencies", "example_txt", "readme.txt")
+    with open(src_path, "r", encoding="utf-8") as f:
+        return f.read()
+
+
+# Generate .gitignore file
+def generate_gitignore_file() -> str:
+    src_path = os.path.join("dependencies", "example_txt", "gitignore.txt")
     with open(src_path, "r", encoding="utf-8") as f:
         return f.read()

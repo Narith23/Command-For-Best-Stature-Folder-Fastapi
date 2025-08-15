@@ -5,10 +5,12 @@ from dependencies.item_file import (
     generate_base_response_file,
     generate_config_file,
     generate_env_file,
+    generate_gitignore_file,
     generate_main_file,
     generate_readme_file,
     generate_requirements_file,
 )
+from utils.jwt_secret_key import generate_secret_key
 from utils.loading_spinner import loading_spinner
 
 
@@ -65,6 +67,22 @@ def main() -> None:
         print("❌ No folder selected. Exiting.")
         return
 
+    # Ask for JWT authentication usage
+    request_jwt = (
+        input("\n🔑 Do you want to use JWT authentication? (y/n): ").strip().lower()
+    )
+    if request_jwt == "y":
+        request_jwt = True
+    else:
+        request_jwt = False
+
+    # Ask for database usage
+    request_db = input("\n📦 Do you want to use a database? (y/n): ").strip().lower()
+    if request_db == "y":
+        request_db = True
+    else:
+        request_db = False
+
     print(f"\n📦 Creating FastAPI project inside: {base_folder}")
     os.makedirs(base_folder, exist_ok=True)
     loading_spinner("Initializing project", duration=1.5)
@@ -91,9 +109,19 @@ def main() -> None:
         "README.md": generate_readme_file(),
         "requirements.txt": generate_requirements_file(),
         "main.py": generate_main_file(),
-        "app/core/config.py": generate_config_file(),
+        "app/core/config.py": generate_config_file(
+            request_jwt=request_jwt, request_db=request_db
+        ),
         "app/utils/base_response.py": generate_base_response_file(),
-        ".env.example": generate_env_file(),
+        ".env": generate_env_file(
+            request_jwt=request_jwt,
+            request_db=request_db,
+            jwt_secret_key=generate_secret_key(),
+        ),
+        ".env.example": generate_env_file(
+            request_jwt=request_jwt, request_db=request_db
+        ),
+        ".gitignore": generate_gitignore_file(),
     }
 
     print("\n📝 Creating files...")

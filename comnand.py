@@ -4,6 +4,7 @@ from tkinter import filedialog
 from dependencies.item_file import (
     generate_base_response_file,
     generate_config_file,
+    generate_database_file,
     generate_env_file,
     generate_gitignore_file,
     generate_main_file,
@@ -82,6 +83,14 @@ def main() -> None:
         request_db = True
     else:
         request_db = False
+    
+    if request_db:
+        # Ask for database type
+        connection_type = (
+            input("\n🔑 What type of database do you want to use? (mysql/postgres): ")
+            .strip()
+            .lower()
+        )
 
     print(f"\n📦 Creating FastAPI project inside: {base_folder}")
     os.makedirs(base_folder, exist_ok=True)
@@ -123,6 +132,9 @@ def main() -> None:
         ),
         ".gitignore": generate_gitignore_file(),
     }
+    
+    if request_db:
+        files["app/core/database.py"] = generate_database_file(connection_type)
 
     print("\n📝 Creating files...")
     create_files(base_folder, files)

@@ -1,6 +1,5 @@
 # Generate .env.example file
 import os
-import shutil
 
 
 def generate_env_file(
@@ -118,5 +117,14 @@ def generate_readme_file() -> str:
 # Generate .gitignore file
 def generate_gitignore_file() -> str:
     src_path = os.path.join("dependencies", "example_txt", "gitignore.txt")
+    with open(src_path, "r", encoding="utf-8") as f:
+        return f.read()
+
+
+# Generate database.py file
+def generate_database_file(connection_type: str = "mysql") -> str:
+    src_path = os.path.join(
+        "dependencies", "example_txt", connection_type, "database.txt"
+    )
     with open(src_path, "r", encoding="utf-8") as f:
         return f.read()

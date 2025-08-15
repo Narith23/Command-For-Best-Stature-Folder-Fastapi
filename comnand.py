@@ -83,14 +83,6 @@ def main() -> None:
         request_db = True
     else:
         request_db = False
-    
-    if request_db:
-        # Ask for database type
-        connection_type = (
-            input("\n🔑 What type of database do you want to use? (mysql/postgres): ")
-            .strip()
-            .lower()
-        )
 
     print(f"\n📦 Creating FastAPI project inside: {base_folder}")
     os.makedirs(base_folder, exist_ok=True)
@@ -132,9 +124,9 @@ def main() -> None:
         ),
         ".gitignore": generate_gitignore_file(),
     }
-    
+
     if request_db:
-        files["app/core/database.py"] = generate_database_file(connection_type)
+        files["app/core/database.py"] = generate_database_file()
 
     print("\n📝 Creating files...")
     create_files(base_folder, files)

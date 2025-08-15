@@ -122,9 +122,9 @@ def generate_gitignore_file() -> str:
 
 
 # Generate database.py file
-def generate_database_file(connection_type: str = "mysql") -> str:
-    src_path = os.path.join(
-        "dependencies", "example_txt", connection_type, "database.txt"
-    )
+def generate_database_file() -> str:
+    # Try the selected database type
+    src_path = os.path.join("dependencies", "example_txt", "database.txt")
+
     with open(src_path, "r", encoding="utf-8") as f:
         return f.read()

@@ -118,26 +118,26 @@ def main() -> None:
     # Laravel-style FastAPI folder structure
     folders = [
         "app",
-        "app/api/controllers",  # like Laravel Http/Controllers
-        "app/api/middleware",  # request middleware
-        "app/api/requests",  # Pydantic requests
-        "app/api/routes",  # routes definitions
-        "app/models",  # SQLAlchemy models
-        "app/schemas",  # Pydantic schemas
-        "app/services",  # business logic
-        "app/repositories",  # DB queries
-        "app/exceptions",  # custom exceptions
-        "app/providers",  # DI, event providers
-        "app/core",  # config, database, logging
-        "app/utils",  # utils & helpers
-        "database/migrations",  # alembic migrations
-        "database/seeders",  # seeders
-        "database/factories",  # faker factories
-        "resources/views",  # Jinja2 templates
-        "resources/lang",  # translations
-        "public",  # static files
-        "storage",  # cache, logs, uploads
-        "tests",  # pytest tests
+        "app/api/controllers",          # like Laravel Http/Controllers
+        "app/api/middleware",           # request middleware
+        "app/api/requests",             # Pydantic requests
+        "app/api/routes",               # routes definitions
+        "app/models",                   # SQLAlchemy models
+        "app/schemas",                  # Pydantic schemas
+        "app/services",                 # business logic
+        "app/repositories",             # DB queries
+        "app/exceptions",               # custom exceptions
+        "app/providers",                # DI, event providers
+        "app/core",                     # config, database, logging
+        "app/utils",                    # utils & helpers
+        "database/migrations",          # alembic migrations
+        "database/seeders",             # seeders
+        "database/factories",           # faker factories
+        "resources/views",              # Jinja2 templates
+        "resources/lang",               # translations
+        "public",                       # static files
+        "storage",                      # cache, logs, uploads
+        "tests",                        # pytest tests
     ]
 
     print("\n📁 Creating folders...")

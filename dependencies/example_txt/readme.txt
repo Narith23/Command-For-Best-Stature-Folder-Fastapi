@@ -16,22 +16,40 @@ It includes environment configuration, dependency management, and a recommended 
 
 ## 📂 Project Structure
 ```
-project_name/
-│── app/
-│   ├── main.py             # Entry point
-│   ├── api/                # API
-|   |   ├── form            # Form request
-|   |   ├── router          # Router
-|   |   ├── schema          # Schemas
-│   ├── core/               # Configurations & settings & databases
-│   ├── db/                 # Database models
-│   ├── dependencies/       # Dependencies
-│   ├── services/           # Business logic
-│   ├── utils               # DB connection
-│── tests/                  # Unit tests
-│── requirements.txt        # Python dependencies
-│── README.md               # Documentation
-│── .env                    # Environment variables
+fastapi-project/
+├── app/
+│   ├── api/                  # (like Http/Controllers in Laravel)
+│   │   ├── controllers/      # route logic
+│   │   ├── middleware/       # request middleware
+│   │   ├── requests/         # request validation (Pydantic)
+│   │   └── routes/           # route definitions
+│   │
+│   ├── models/               # SQLAlchemy models (like Laravel Models)
+│   ├── schemas/              # Pydantic schemas (like Laravel FormRequests/DTOs)
+│   ├── services/             # business logic (like Laravel Services)
+│   ├── repositories/         # database queries (like Laravel Repositories)
+│   ├── exceptions/           # custom exceptions
+│   └── providers/            # dependency injection, events (like Laravel Providers)
+│
+├── bootstrap/                # startup files (DB init, logging)
+├── config/                   # config files (db, auth, cache…)
+├── database/                 
+│   ├── migrations/           # alembic migrations
+│   ├── seeders/              # seeding data
+│   └── factories/            # faker factories
+│
+├── public/                   # static files (CSS, JS, uploads) 
+├── resources/                
+│   ├── views/                # Jinja2 templates (like Laravel Blade)
+│   └── lang/                 # translations
+│
+├── routes/                   # main route entry (like Laravel routes/web.php, api.php)
+├── storage/                  # cache, logs, uploads
+├── tests/                    # pytest tests
+├── .env                      # environment variables
+├── main.py                   # app entry (like Laravel artisan serve)
+├── requirements.txt           # (like composer.json)
+└── alembic.ini                # migration config
 ```
 
 ---

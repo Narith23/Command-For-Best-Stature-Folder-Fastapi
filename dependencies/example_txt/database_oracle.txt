@@ -1,0 +1,54 @@
+import logging
+import cx_Oracle
+from sqlalchemy import create_engine, NullPool
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.engine import URL
+
+from app.core.config import settings
+
+logger = logging.getLogger(__name__)
+
+# Oracle connection details
+host = settings.DB_HOST
+port = settings.DB_PORT
+service_name = settings.DB_SERVICE_NAME
+
+# Oracle DESCRIPTION string
+oracle_db = (
+    "(DESCRIPTION="
+    f"(ADDRESS=(PROTOCOL=TCP)(HOST={host})(PORT={port}))"
+    f"(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME={service_name})))"
+)
+
+# Build Oracle connection URL
+url_db = URL.create(
+    drivername="oracle+cx_oracle",
+    username=settings.DB_USERNAME,
+    password=settings.DB_PASSWORD,
+    host=None,       # host is included in DESCRIPTION
+    database=oracle_db,
+)
+
+try:
+    engine = create_engine(
+        url_db,
+        poolclass=NullPool,      # optional: disable pooling
+        pool_pre_ping=True,
+        echo=False
+    )
+except SQLAlchemyError as e:
+    logger.exception("❌ Failed to create Oracle engine")
+    raise e
+
+# Session factory
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+def get_session():
+    """Yield an Oracle session and ensure proper closing."""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

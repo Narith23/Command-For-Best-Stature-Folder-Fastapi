@@ -1,0 +1,44 @@
+import logging
+from sqlalchemy import create_engine
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.engine import URL
+
+from app.core.config import settings
+
+logger = logging.getLogger(__name__)
+
+# Build PostgreSQL connection URL
+url_db = URL.create(
+    drivername="postgresql+psycopg2",
+    username=settings.DB_USERNAME,
+    password=settings.DB_PASSWORD,
+    host=settings.DB_HOST,
+    port=settings.DB_PORT,
+    database=settings.DB_DATABASE,
+)
+
+try:
+    engine = create_engine(
+        url_db,
+        pool_pre_ping=True,
+        pool_size=20,
+        max_overflow=20,
+        pool_timeout=30,
+        pool_recycle=1800,
+        echo=False
+    )
+except SQLAlchemyError as e:
+    logger.exception("❌ Failed to create PostgreSQL engine")
+    raise e
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+def get_session():
+    """Yield a PostgreSQL session and ensure proper closing."""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

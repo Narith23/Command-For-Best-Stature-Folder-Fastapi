@@ -142,6 +142,10 @@ def generate_config_file(request_jwt: bool = False, request_db: bool = False) ->
         "\tSESSION_DRIVER: str = 'file'\n"
         "\tSESSION_LIFETIME: int = 120\n\n"
         "\tLOG_FILE: str = 'storage/logs/app.log'\n\n"
+        "\tclass Config:\n"
+        "\t\tenv_file = '.env'\n"
+        "\t\tenv_file_encoding = 'utf-8'\n"
+        "\t\tcase_sensitive = True\n\n"
         "settings = Settings()"
     )
 

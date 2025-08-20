@@ -27,7 +27,7 @@ api_docs = {
 # Initialize FastAPI application
 app = FastAPI(
     title=settings.APP_NAME,
-    description=settings.APP_DEscriptION,
+    description=settings.APP_DESCRIPTION,
     version=settings.APP_VERSION,
     **api_docs,
 )

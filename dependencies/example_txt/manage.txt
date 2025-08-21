@@ -71,6 +71,12 @@ metadata = MetaData()
 
 def upgrade():
     """Create or modify table: {table_name}"""
+    # Check if table exists
+    tbl = Table("users", metadata, autoload_with=engine)
+    if tbl.exists():
+        print("⚠️ Table 'users' already exists")
+        return
+        
     # Example: create table
     Table(
         "{table_name}",

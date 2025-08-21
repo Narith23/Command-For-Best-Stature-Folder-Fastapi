@@ -10,6 +10,7 @@ from dependencies.item_file import (
     generate_gitignore_file,
     generate_logging_file,
     generate_main_file,
+    generate_manage_file,
     generate_readme_file,
     generate_requirements_file,
 )
@@ -151,6 +152,7 @@ def main() -> None:
             request_db=request_db, request_jwt=request_jwt, db_type=db_type
         ),
         "main.py": generate_main_file(),
+        "manage.py": generate_manage_file(),
         "app/core/config.py": generate_config_file(
             request_jwt=request_jwt, request_db=request_db
         ),

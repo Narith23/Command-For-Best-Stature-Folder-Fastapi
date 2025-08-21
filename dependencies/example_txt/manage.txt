@@ -1,0 +1,128 @@
+import os
+import datetime
+import sys
+import click
+import importlib.util
+
+MIGRATIONS_DIR = os.path.join("database", "migrations")
+os.makedirs(MIGRATIONS_DIR, exist_ok=True)
+
+
+def extract_table_name(migration_name: str) -> str:
+    """
+    Extract the table name from a Laravel-style migration name.
+
+    Examples:
+        create_users_table -> users
+        add_email_to_users_table -> users
+        drop_orders_table -> orders
+    """
+    parts = migration_name.lower().split("_")
+
+    if "create" in parts and "table" in parts:
+        start = parts.index("create") + 1
+        end = parts.index("table")
+        return "_".join(parts[start:end])
+
+    if "add" in parts and "to" in parts:
+        end = parts.index("to")
+        return "_".join(parts[end + 1 :])
+
+    if "drop" in parts and "table" in parts:
+        start = parts.index("drop") + 1
+        end = parts.index("table")
+        return "_".join(parts[start:end])
+
+    # fallback: use the last word
+    return parts[-1]
+
+
+@click.group()
+def cli():
+    """FastAPI Laravel-style management commands."""
+    pass
+
+
+# ---------------------
+# Create Migration File
+# ---------------------
+@cli.command("make:migration")
+@click.argument("name")
+def make_migration(name):
+    """Create a new migration file."""
+    name = str(name).strip()
+    table_name = extract_table_name(name)
+
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    safe_name = name.lower().replace(" ", "_")
+    filename = f"{timestamp}_{safe_name}.py"
+    filepath = os.path.join(MIGRATIONS_DIR, filename)
+
+    template = f'''"""
+Migration: {name}
+Table: {table_name}
+Created: {datetime.datetime.now().isoformat()}
+"""
+
+from sqlalchemy import Table, Column, Integer, String, DateTime, func, MetaData
+from app.core.database import engine
+
+metadata = MetaData()
+
+def upgrade():
+    """Create or modify table: {table_name}"""
+    # Example: create table
+    Table(
+        "{table_name}",
+        metadata,
+        Column("id", Integer, primary_key=True),
+        Column("created_at", DateTime, nullable=False, server_default=func.now()),
+        Column("updated_at", DateTime, nullable=True, onupdate=func.now()),
+        extend_existing=True
+    ).create(checkfirst=True, bind=engine)
+    print("✅ Table '{table_name}' created or exists already")
+
+def downgrade():
+    """Rollback changes for table: {table_name}"""
+    tbl = Table("{table_name}", metadata, autoload_with=engine)
+    tbl.drop(checkfirst=True, bind=engine)
+    print("🗑️ Table '{table_name}' dropped if existed")
+'''
+
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write(template)
+    print(f"✅ Migration created: {filepath}")
+
+
+# ---------------------
+# Run Migrations
+# ---------------------
+@cli.command("migrate")
+def migrate():
+    """Run all migrations (execute upgrade() functions)."""
+    confirm = input("⚠️ This will create/update all tables. Continue? (y/n): ")
+    if confirm.lower() != "y":
+        print("❌ Cancelled")
+        return
+
+    # Sort files to run in chronological order
+    files = sorted(os.listdir(MIGRATIONS_DIR))
+    for file in files:
+        if file.endswith(".py"):
+            path = os.path.join(MIGRATIONS_DIR, file)
+            spec = importlib.util.spec_from_file_location("migration", path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+
+            if hasattr(module, "upgrade"):
+                print(f"📦 Running migration: {file}")
+                try:
+                    module.upgrade()
+                except Exception as e:
+                    print(f"❌ Failed migration {file}: {e}")
+                    sys.exit(1)
+    print("✅ All migrations executed successfully")
+
+
+if __name__ == "__main__":
+    cli()

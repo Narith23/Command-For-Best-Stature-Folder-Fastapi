@@ -180,7 +180,7 @@ def generate_requirements_file(
     Returns:
         str: requirements.txt content
     """
-    base_txt = "fastapi[all]\nSQLAlchemy\n"
+    base_txt = "fastapi[all]\nSQLAlchemy\nclick\n"
 
     # JWT dependencies
     if request_jwt:
@@ -273,5 +273,17 @@ def generate_logging_file() -> str:
         str: Content of the logging.py file.
     """
     src_path = os.path.join("dependencies", "example_txt", "logging.txt")
+    with open(src_path, "r", encoding="utf-8") as f:
+        return f.read()
+    
+# Generate manage.py file
+def generate_manage_file() -> str:
+    """
+    Generate the manage.py file content.
+
+    Returns:
+        str: Content of the manage.py file.
+    """
+    src_path = os.path.join("dependencies", "example_txt", "manage.txt")
     with open(src_path, "r", encoding="utf-8") as f:
         return f.read()

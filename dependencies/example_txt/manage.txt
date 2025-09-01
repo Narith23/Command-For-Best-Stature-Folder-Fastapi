@@ -4,8 +4,17 @@ import sys
 import click
 import importlib.util
 
+# ---------------------
+# Migrations Directory
+# ---------------------
 MIGRATIONS_DIR = os.path.join("database", "migrations")
 os.makedirs(MIGRATIONS_DIR, exist_ok=True)
+
+# ---------------------
+# Seeder Directory
+# ---------------------
+SEEDERS_DIR = os.path.join("database", "seeders")
+os.makedirs(SEEDERS_DIR, exist_ok=True)
 
 
 def extract_table_name(migration_name: str) -> str:
@@ -128,6 +137,91 @@ def migrate():
                     print(f"❌ Failed migration {file}: {e}")
                     sys.exit(1)
     print("✅ All migrations executed successfully")
+
+
+# ---------------------
+# Create Seeders File
+# ---------------------
+@cli.command("make:seeder")
+@click.argument("name")
+def make_seeder(name):
+    """Create a new seeder file."""
+    name = str(name).strip()
+    seeder_name = (
+        name.title().replace("_", "") + "Seeder"
+    )  # Convert to PascalCaseSeeder
+
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"{timestamp}_{seeder_name}.py"
+    filepath = os.path.join(SEEDERS_DIR, filename)
+
+    template = f'''"""
+Seeder: {seeder_name}
+Created: {datetime.datetime.now().isoformat()}
+"""
+
+from app.core.database import SessionLocal
+
+def run():
+    db = SessionLocal()
+    try:
+        # TODO: Add your seeding logic here
+        print("🌱 Running seeder: {seeder_name}")
+
+        # Example:
+        # user = User(first_name="Admin", email="admin@example.com", username="admin", password="secret")
+        # db.add(user)
+        # db.commit()
+
+    finally:
+        db.close()
+    print("✅ Seeder {seeder_name} executed")
+'''
+
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write(template)
+    print(f"✅ Seeder created: {filepath}")
+
+
+# ---------------------
+# Run All Seeders
+# ---------------------
+@cli.command("db:seed")
+@click.option(
+    "--class_", "class_name", default=None, help="Seeder class to run (e.g. UserSeeder)"
+)
+def db_seed(class_name):
+    """Run seeders (all or specific)."""
+    confirm = input("⚠️ This will insert seed data. Continue? (y/n): ")
+    if confirm.lower() != "y":
+        print("❌ Cancelled")
+        return
+
+    files = sorted(os.listdir(SEEDERS_DIR))
+    for file in files:
+        if not file.endswith(".py"):
+            continue
+
+        path = os.path.join(SEEDERS_DIR, file)
+        spec = importlib.util.spec_from_file_location("seeder", path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        if hasattr(module, "run"):
+            seeder_name = os.path.splitext(file)[0].split("_", 1)[1]  # e.g. UserSeeder
+            if class_name and not seeder_name.lower().startswith(class_name.lower()):
+                continue  # skip non-matching seeders
+
+            print(f"📦 Running seeder: {file}")
+            try:
+                module.run()
+            except Exception as e:
+                print(f"❌ Failed seeder {file}: {e}")
+                sys.exit(1)
+
+            if class_name:  # if only one seeder, stop after running it
+                break
+    print("✅ Seeder(s) executed successfully")
 
 
 if __name__ == "__main__":

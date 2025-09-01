@@ -1,0 +1,49 @@
+# app/dependencies/rbac_dependencies.py
+from functools import wraps
+from fastapi import Depends, HTTPException, status
+from app.dependencies.auth_dependencie import get_current_user
+from app.models.users_model import Users
+
+
+def can_role(*roles: str):
+    """
+    Decorator to ensure the current user has at least one of the roles.
+    """
+
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(
+            *args, current_user: Users = Depends(get_current_user), **kwargs
+        ):
+            if not current_user.has_role(*roles):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="[PermissionDenied]You do not have permission to perform this action.",
+                )
+            return await func(*args, current_user=current_user, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def can_permission(*permissions: str):
+    """
+    Decorator to ensure the current user has at least one of the permissions.
+    """
+
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(
+            *args, current_user: Users = Depends(get_current_user), **kwargs
+        ):
+            if not current_user.has_permission(*permissions):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="[PermissionDenied]You do not have permission to perform this action.",
+                )
+            return await func(*args, current_user=current_user, **kwargs)
+
+        return wrapper
+
+    return decorator

@@ -1,0 +1,61 @@
+# app/dependencies/auth_dependencie.py
+import logging
+from typing import Annotated
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.orm import Session
+
+from app.core.config import settings
+from app.core.database import get_session
+from app.models.users_model import Users
+from app.services.jwt_service import JWTService
+
+logger = logging.getLogger(__name__)
+
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl=f"/api/auth/login/swagger"
+)
+
+
+# ✅ Decodes JWT and returns user payload
+async def get_current_user(
+    token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(get_session)
+) -> Users:
+    try:
+        payload = JWTService.decode_token(token)
+        if payload.get("expired"):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Not authenticated",
+            )
+
+        user_id = payload.get("data", {}).get("id")
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Not authenticated",
+            )
+
+        # Load user from DB
+        user = db.query(Users).filter(Users.id == user_id).first()
+
+        # Check if user exists
+        if not user or not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found or inactive",
+            )
+
+        # Finally return user
+        return user
+
+    except HTTPException:
+        logger.error("HTTPException while decoding token")
+        raise
+
+    except Exception as e:
+        logger.error(f"Unhandled error decoding token: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+        )

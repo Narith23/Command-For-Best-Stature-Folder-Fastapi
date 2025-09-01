@@ -275,7 +275,8 @@ def generate_logging_file() -> str:
     src_path = os.path.join("dependencies", "example_txt", "logging.txt")
     with open(src_path, "r", encoding="utf-8") as f:
         return f.read()
-    
+
+
 # Generate manage.py file
 def generate_manage_file() -> str:
     """
@@ -286,4 +287,30 @@ def generate_manage_file() -> str:
     """
     src_path = os.path.join("dependencies", "example_txt", "manage.txt")
     with open(src_path, "r", encoding="utf-8") as f:
+        return f.read()
+
+
+# Generate auth_dependency.py file
+def generate_auth_dependency_file() -> str:
+    """
+    Generate the auth_dependency.py file content.
+
+    Returns:
+        str: Content of the auth_dependency.py file.
+    """
+    scr_path = os.path.join("dependencies", "example_txt", "auth_dependency.txt")
+    with open(scr_path, "r", encoding="utf-8") as f:
+        return f.read()
+
+
+# Generate rbac_dependency.py file
+def generate_rbac_dependency_file() -> str:
+    """
+    Generate the rbac_dependency.py file content.
+
+    Returns:
+        str: Content of the rbac_dependency.py file.
+    """
+    scr_path = os.path.join("dependencies", "example_txt", "rbac_dependency.txt")
+    with open(scr_path, "r", encoding="utf-8") as f:
         return f.read()

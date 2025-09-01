@@ -3,6 +3,7 @@ import tkinter as tk
 
 from tkinter import filedialog
 from dependencies.item_file import (
+    generate_auth_dependency_file,
     generate_base_response_file,
     generate_config_file,
     generate_database_file,
@@ -157,6 +158,8 @@ def main() -> None:
             request_jwt=request_jwt, request_db=request_db
         ),
         "app/core/logging.py": generate_logging_file(),
+        "app/dependependencies/auth_dependencie.py": generate_auth_dependency_file(),
+        "app/dependependencies/rbac_dependencies.py": generate_rbac_dependency_file(),
         "app/utils/base_response.py": generate_base_response_file(),
         ".env": generate_env_file(
             request_jwt=request_jwt,

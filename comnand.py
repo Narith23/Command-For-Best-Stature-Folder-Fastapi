@@ -122,9 +122,9 @@ def main() -> None:
     # Laravel-style FastAPI folder structure
     folders = [
         "app",
-        "app/api/form",
-        "app/api/router",
-        "app/api/schema",
+        "app/api/controllers",
+        "app/api/routers",
+        "app/api/schemas",
         "app/core",
         "app/db",
         "app/dependencies",

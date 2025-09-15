@@ -12,6 +12,7 @@ from dependencies.item_file import (
     generate_logging_file,
     generate_main_file,
     generate_manage_file,
+    generate_rbac_dependency_file,
     generate_readme_file,
     generate_requirements_file,
 )

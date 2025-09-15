@@ -1,7 +1,9 @@
 import os
+import logging
 import tkinter as tk
-
 from tkinter import filedialog
+from typing import Dict, List, Optional
+
 from dependencies.item_file import (
     generate_auth_dependency_file,
     generate_base_response_file,
@@ -11,7 +13,6 @@ from dependencies.item_file import (
     generate_gitignore_file,
     generate_logging_file,
     generate_main_file,
-    generate_manage_file,
     generate_rbac_dependency_file,
     generate_readme_file,
     generate_requirements_file,
@@ -20,13 +21,14 @@ from dependencies.item_file import (
 from utils.jwt_secret_key import generate_secret_key
 from utils.loading_spinner import loading_spinner
 
+logging.basicConfig(level=logging.INFO, format="%(message)s")
 
-def create_folders(base_dir: str, folders: list[str]) -> None:
-    """
-    Create folders inside base_dir.
-    Adds __init__.py to each folder except those related to tests,
-    so they are treated as Python packages.
-    """
+
+# ---------------------------
+# Helpers
+# ---------------------------
+def create_folders(base_dir: str, folders: List[str]) -> None:
+    """Create folders with __init__.py (except tests)."""
     for folder in folders:
         path = os.path.join(base_dir, folder)
         os.makedirs(path, exist_ok=True)
@@ -34,17 +36,14 @@ def create_folders(base_dir: str, folders: list[str]) -> None:
         if "tests" not in folder.split(os.sep):
             init_file = os.path.join(path, "__init__.py")
             try:
-                with open(init_file, "w", encoding="utf-8") as f:
+                with open(init_file, "w", encoding="utf-8"):
                     pass
             except OSError as e:
-                print(f"⚠️ Warning: Failed to create {init_file}: {e}")
+                logging.warning(f"⚠️ Failed to create {init_file}: {e}")
 
 
-def create_files(base_dir: str, files: dict[str, str]) -> None:
-    """
-    Create files with given content inside base_dir.
-    Creates parent folders if needed.
-    """
+def create_files(base_dir: str, files: Dict[str, str]) -> None:
+    """Create files with given content inside base_dir."""
     for relative_path, content in files.items():
         full_path = os.path.join(base_dir, relative_path)
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
@@ -52,13 +51,11 @@ def create_files(base_dir: str, files: dict[str, str]) -> None:
             with open(full_path, "w", encoding="utf-8") as f:
                 f.write(content)
         except OSError as e:
-            print(f"⚠️ Warning: Failed to create file {full_path}: {e}")
+            logging.warning(f"⚠️ Failed to create file {full_path}: {e}")
 
 
 def ask_yes_no(question: str, default: bool = False) -> bool:
-    """
-    Helper to ask yes/no question with default option.
-    """
+    """Ask yes/no question with default option."""
     choice = input(f"\n{question} (y/n): ").strip().lower()
     if choice in ("y", "yes"):
         return True
@@ -67,20 +64,17 @@ def ask_yes_no(question: str, default: bool = False) -> bool:
     return default
 
 
-def select_base_folder() -> str | None:
-    """
-    Opens a folder selection dialog and returns the selected folder path.
-    Returns None if no folder selected.
-    """
+def select_base_folder() -> Optional[str]:
+    """Open a folder dialog for selecting project root."""
     root = tk.Tk()
-    root.withdraw()  # Hide the root window
-    folder_selected = filedialog.askdirectory(title="Select Base Folder")
+    root.withdraw()
+    folder = filedialog.askdirectory(title="Select Base Folder")
     root.destroy()
-    return folder_selected if folder_selected else None
+    return folder or None
 
 
-def select_db_type() -> str | None:
-    """Let the user select a database type from a menu."""
+def select_db_type() -> Optional[str]:
+    """Let the user select a database type."""
     db_options = ["mysql", "postgresql", "oracle"]
     print("\n🗄️  Select a database type:")
     for idx, db in enumerate(db_options, start=1):
@@ -92,34 +86,36 @@ def select_db_type() -> str | None:
         if 1 <= idx <= len(db_options):
             return db_options[idx - 1]
 
-    print("❌ Invalid choice. Exiting.")
+    logging.error("❌ Invalid choice. Exiting.")
     return None
 
 
+# ---------------------------
+# Main generator
+# ---------------------------
 def main() -> None:
-    print("📂 Please select the base folder for the FastAPI project.")
+    print("📂 Select base folder for FastAPI project")
     base_folder = select_base_folder()
     if not base_folder:
-        print("❌ No folder selected. Exiting.")
+        logging.error("❌ No folder selected. Exiting.")
         return
 
-    # Ask feature options
-    request_jwt = ask_yes_no("🔑 Do you want to use JWT authentication?", default=True)
-    request_db = ask_yes_no("🗄️  Do you want to use a database?", default=True)
+    # Feature options
+    request_jwt = ask_yes_no("🔑 Use JWT authentication?", default=True)
+    request_db = ask_yes_no("🗄️  Use a database?", default=True)
 
-    # Database selection
     db_type = None
     if request_db:
         db_type = select_db_type()
         if not db_type:
             return
-        print(f"✅ Selected database: {db_type}")
+        logging.info(f"✅ Selected database: {db_type}")
 
-    print(f"\n📦 Creating Laravel-style FastAPI project inside: {base_folder}")
+    logging.info(f"\n📦 Creating Laravel-style FastAPI project in: {base_folder}")
     os.makedirs(base_folder, exist_ok=True)
     loading_spinner("Initializing project", duration=1.2)
 
-    # Laravel-style FastAPI folder structure
+    # Folder structure
     folders = [
         "app",
         "app/api/controllers",
@@ -132,25 +128,23 @@ def main() -> None:
         "app/utils",
         "tests",
     ]
-
-    print("\n📁 Creating folders...")
+    logging.info("\n📁 Creating folders...")
     create_folders(base_folder, folders)
     loading_spinner("Creating folders", duration=1.2)
 
-    # Starter files
+    # File structure
     files = {
         "README.md": generate_readme_file(),
         "requirements.txt": generate_requirements_file(
             request_db=request_db, request_jwt=request_jwt, db_type=db_type
         ),
         "main.py": generate_main_file(),
-        # "manage.py": generate_manage_file(),
         "app/core/config.py": generate_config_file(
             request_jwt=request_jwt, request_db=request_db
         ),
         "app/core/logging.py": generate_logging_file(),
-        "app/dependencies/auth_dependencie.py": generate_auth_dependency_file(),
-        "app/dependencies/rbac_dependencies.py": generate_rbac_dependency_file(),
+        "app/dependencies/auth_dependency.py": generate_auth_dependency_file(),
+        "app/dependencies/rbac_dependency.py": generate_rbac_dependency_file(),
         "app/utils/base_response.py": generate_base_response_file(),
         "app/utils/storage.py": generate_storage_file(),
         ".env": generate_env_file(
@@ -168,12 +162,12 @@ def main() -> None:
     if request_db:
         files["app/core/database.py"] = generate_database_file(db_type=db_type)
 
-    print("\n📝 Creating files...")
+    logging.info("\n📝 Creating files...")
     create_files(base_folder, files)
     loading_spinner("Creating files", duration=1.2)
 
-    print("\n✅ FastAPI project (Laravel-style) created successfully!")
-    print(f"👉 Next step: cd {base_folder} && uvicorn main:app --reload")
+    logging.info("\n✅ FastAPI project (Laravel-style) created successfully!")
+    print(f"👉 Next step:\n   cd {base_folder} && uvicorn main:app --reload")
 
 
 if __name__ == "__main__":

@@ -314,3 +314,16 @@ def generate_rbac_dependency_file() -> str:
     scr_path = os.path.join("dependencies", "example_txt", "rbac_dependency.txt")
     with open(scr_path, "r", encoding="utf-8") as f:
         return f.read()
+
+
+# Generate storage.py file
+def generate_storage_file() -> str:
+    """
+    Generate the storage.py file content.
+
+    Returns:
+        str: Content of the storage.py file.
+    """
+    scr_path = os.path.join("dependencies", "example_txt", "storage.txt")
+    with open(scr_path, "r", encoding="utf-8") as f:
+        return f.read()

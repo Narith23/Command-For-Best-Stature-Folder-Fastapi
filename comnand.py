@@ -15,6 +15,7 @@ from dependencies.item_file import (
     generate_rbac_dependency_file,
     generate_readme_file,
     generate_requirements_file,
+    generate_storage_file,
 )
 from utils.jwt_secret_key import generate_secret_key
 from utils.loading_spinner import loading_spinner
@@ -121,26 +122,15 @@ def main() -> None:
     # Laravel-style FastAPI folder structure
     folders = [
         "app",
-        "app/api/controllers",          # like Laravel Http/Controllers
-        "app/api/middleware",           # request middleware
-        "app/api/requests",             # Pydantic requests
-        "app/api/routes",               # routes definitions
-        "app/models",                   # SQLAlchemy models
-        "app/schemas",                  # Pydantic schemas
-        "app/services",                 # business logic
-        "app/repositories",             # DB queries
-        "app/exceptions",               # custom exceptions
-        "app/providers",                # DI, event providers
-        "app/core",                     # config, database, logging
-        "app/utils",                    # utils & helpers
-        "database/migrations",          # alembic migrations
-        "database/seeders",             # seeders
-        "database/factories",           # faker factories
-        "resources/views",              # Jinja2 templates
-        "resources/lang",               # translations
-        "public",                       # static files
-        "storage",                      # cache, logs, uploads
-        "tests",                        # pytest tests
+        "app/api/form",
+        "app/api/router",
+        "app/api/schema",
+        "app/core",
+        "app/db",
+        "app/dependencies",
+        "app/services",
+        "app/utils",
+        "tests",
     ]
 
     print("\n📁 Creating folders...")
@@ -154,14 +144,15 @@ def main() -> None:
             request_db=request_db, request_jwt=request_jwt, db_type=db_type
         ),
         "main.py": generate_main_file(),
-        "manage.py": generate_manage_file(),
+        # "manage.py": generate_manage_file(),
         "app/core/config.py": generate_config_file(
             request_jwt=request_jwt, request_db=request_db
         ),
         "app/core/logging.py": generate_logging_file(),
-        "app/dependependencies/auth_dependencie.py": generate_auth_dependency_file(),
-        "app/dependependencies/rbac_dependencies.py": generate_rbac_dependency_file(),
+        "app/dependencies/auth_dependencie.py": generate_auth_dependency_file(),
+        "app/dependencies/rbac_dependencies.py": generate_rbac_dependency_file(),
         "app/utils/base_response.py": generate_base_response_file(),
+        "app/utils/storage.py": generate_storage_file(),
         ".env": generate_env_file(
             request_jwt=request_jwt,
             request_db=request_db,
@@ -172,8 +163,6 @@ def main() -> None:
             request_jwt=request_jwt, request_db=request_db, db_type=db_type
         ),
         ".gitignore": generate_gitignore_file(),
-        "routes/api.py": "# API routes entry (like Laravel routes/api.php)\n",
-        "routes/web.py": "# Web routes entry (like Laravel routes/web.php)\n",
     }
 
     if request_db:

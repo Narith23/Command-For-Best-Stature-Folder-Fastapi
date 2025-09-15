@@ -1,0 +1,66 @@
+import os
+import shutil
+from fastapi import UploadFile
+from app.core.config import settings
+
+
+def save_file(file: UploadFile, folder: str = "uploads", public: bool = True) -> str:
+    """
+    Save an uploaded file with unique name.
+    If a file already exists, adds (n) before extension.
+    Example: photo.png, photo(1).png, photo(2).png
+    Returns a relative path like Laravel's Storage::disk()->put().
+    Works for both public and private storage.
+    """
+    # Base path depending on public/private
+    base_path = (
+        settings.PUBLIC_STORAGE_PATH
+        if public
+        else os.path.join(settings.STORAGE_PATH, "private")
+    )
+
+    # Ensure folder exists
+    save_folder = os.path.join(base_path, folder)
+    os.makedirs(save_folder, exist_ok=True)
+
+    # Extract original name + extension
+    original_name = os.path.splitext(file.filename or "file")[0]
+    extension = os.path.splitext(file.filename or "")[1]
+
+    # First candidate
+    candidate_name = f"{original_name}{extension}"
+    file_path = os.path.join(save_folder, candidate_name)
+
+    # Add (n) suffix until unique
+    counter = 1
+    while os.path.exists(file_path):
+        candidate_name = f"{original_name}({counter}){extension}"
+        file_path = os.path.join(save_folder, candidate_name)
+        counter += 1
+
+    # Save file in chunks (safe for large files)
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    # Return relative path for storage reference
+    return os.path.join(folder, candidate_name).replace("\\", "/")
+
+
+def file_url(relative_path: str, public: bool = True) -> str:
+    """
+    Return full URL for a file that is served by the gateway.
+    - Public files → /static
+    - Private files → /media/private
+    Returns URL like: http://localhost:8000/static/retail_stores/file.png
+    """
+    # Gateway serves /static and /media/private
+    if public:
+        url_path = (
+            f"{getattr(settings, 'PUBLIC_URL_PREFIX', '/static')}/{relative_path}"
+        )
+    else:
+        url_path = f"/media/private/{relative_path}"
+
+    # Use the gateway base URL from settings
+    gateway_base = getattr(settings, "BASE_URL", "http://localhost:8000").rstrip("/")
+    return f"{gateway_base}{url_path}".replace("\\", "/")

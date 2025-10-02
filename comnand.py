@@ -17,6 +17,7 @@ from dependencies.item_file import (
     generate_readme_file,
     generate_requirements_file,
     generate_storage_file,
+    generate_welcome_page,
 )
 from utils.jwt_secret_key import generate_secret_key
 from utils.loading_spinner import loading_spinner
@@ -124,6 +125,9 @@ def main() -> None:
         "app/core",
         "app/db/models",
         "app/dependencies",
+        "app/resources/css",
+        "app/resources/js",
+        "app/resources/views",
         "app/services",
         "app/utils",
         "tests",
@@ -147,6 +151,7 @@ def main() -> None:
         "app/dependencies/rbac_dependency.py": generate_rbac_dependency_file(),
         "app/utils/base_response.py": generate_base_response_file(),
         "app/utils/storage.py": generate_storage_file(),
+        "app/resources/views/welcome.html": generate_welcome_page(),
         ".env": generate_env_file(
             request_jwt=request_jwt,
             request_db=request_db,

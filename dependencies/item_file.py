@@ -327,3 +327,16 @@ def generate_storage_file() -> str:
     scr_path = os.path.join("dependencies", "example_txt", "storage.txt")
     with open(scr_path, "r", encoding="utf-8") as f:
         return f.read()
+
+
+# Generate welcome page
+def generate_welcome_page() -> str:
+    """
+    Generate the welcome page content.
+
+    Returns:
+        str: Content of the welcome page.
+    """
+    scr_path = os.path.join("dependencies", "example_txt", "welcome_page.html")
+    with open(scr_path, "r", encoding="utf-8") as f:
+        return f.read()

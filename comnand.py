@@ -122,7 +122,7 @@ def main() -> None:
         "app/api/routers",
         "app/api/schemas",
         "app/core",
-        "app/db",
+        "app/db/models",
         "app/dependencies",
         "app/services",
         "app/utils",

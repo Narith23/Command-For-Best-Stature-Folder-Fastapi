@@ -1,26 +1,33 @@
 import logging
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
 from starlette.middleware.cors import CORSMiddleware
 
 from app.utils.base_response import BaseResponse
 from app.core.config import settings
 
 # Setup logger to print to terminal
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 # Configure API documentation URLs based on environment
 api_docs = {
-    'openapi_url': (
-        f'/{settings.ROUTER_PREFIX}/docs/openapi.json' if settings.APP_ENV == 'development' else None
+    "openapi_url": (
+        f"/{settings.ROUTER_PREFIX}/docs/openapi.json"
+        if settings.APP_ENV == "development"
+        else None
     ),
-    'docs_url': (
-        f'/{settings.ROUTER_PREFIX}/docs' if settings.APP_ENV == 'development' else None
+    "docs_url": (
+        f"/{settings.ROUTER_PREFIX}/docs" if settings.APP_ENV == "development" else None
     ),
-    'redoc_url': (
-        f'/{settings.ROUTER_PREFIX}/redoc' if settings.APP_ENV == 'development' else None
+    "redoc_url": (
+        f"/{settings.ROUTER_PREFIX}/redoc"
+        if settings.APP_ENV == "development"
+        else None
     ),
 }
 
@@ -32,40 +39,48 @@ app = FastAPI(
     **api_docs,
 )
 
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=['http://localhost:3000'],  # React/Vue/etc.
+    allow_origins=["http://localhost:3000"],  # React/Vue/etc.
     allow_credentials=True,
-    allow_methods=['*'],
-    allow_headers=['*'],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
+
+# Setup Jinja2 template loader
+templates = Jinja2Templates(directory="app/resources/views")
+
 
 @app.exception_handler(HTTPException)
 async def custom_http_exception_handler(request: Request, exc: HTTPException):
     detail = exc.detail
 
     # Check if detail is a dict and contains 'message'
-    if isinstance(detail, dict) and 'message' in detail:
-        message = detail['message']
+    if isinstance(detail, dict) and "message" in detail:
+        message = detail["message"]
     else:
         message = detail  # Assume it's a string
 
     return JSONResponse(
         status_code=exc.status_code,
         content={
-            'status_code': exc.status_code,
-            'message': message,
-            'result': None,
+            "status_code": exc.status_code,
+            "message": message,
+            "result": None,
         },
     )
+
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     errors = exc.errors()
     formatted_errors = [
         {
-            'field': '.'.join(str(loc) for loc in err['loc'][1:]),  # skip 'body' or 'query'
-            'message': err['msg'],
+            "field": ".".join(
+                str(loc) for loc in err["loc"][1:]
+            ),  # skip 'body' or 'query'
+            "message": err["msg"],
         }
         for err in errors
     ]
@@ -73,15 +88,26 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={
-            'status_code': status.HTTP_422_UNPROCESSABLE_ENTITY,
-            'message': 'Validation failed',
-            'result': formatted_errors,
+            "status_code": status.HTTP_422_UNPROCESSABLE_ENTITY,
+            "message": "Validation failed",
+            "result": formatted_errors,
         },
     )
 
-@app.get('/', status_code=200, response_model=BaseResponse[None], tags=['Default'])
-def read_root():
-    return BaseResponse[None].success(
-        message=f"{settings.APP_NAME} is running v{settings.APP_VERSION}. "
-                f"Go to {api_docs['docs_url']} for API documentation.",
+
+# Serve welcome.html instead of JSON
+@app.get("/", response_class=HTMLResponse, tags=["Default"])
+async def read_root(request: Request):
+    return templates.TemplateResponse(
+        "welcome.html",
+        {
+            "request": request,  # Required by FastAPI
+            "app_name": settings.APP_NAME,  # App name
+            "app_version": settings.APP_VERSION,  # App version
+            "app_description": settings.APP_DESCRIPTION,  # App description
+            "docs_url": api_docs["docs_url"],  # Swagger docs URL
+            "redoc_url": api_docs["redoc_url"],  # ReDoc URL
+            "custom_message": "Hello, FastAPI user!",  # Example custom key
+            "year": 2025,  # Another example key
+        },
     )

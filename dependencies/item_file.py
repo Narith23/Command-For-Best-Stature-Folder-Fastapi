@@ -24,6 +24,7 @@ def generate_env_file(
         "APP_DEBUG=true\n"
         "APP_DESCRIPTION=This is a FastAPI application.\n"
         "APP_VERSION=1.0.0\n\n"
+        "APP_URL=http://localhost:8000\n"
         "ROUTER_PREFIX=api/v1\n\n"
     )
 
@@ -71,6 +72,8 @@ def generate_env_file(
 
     # Other Laravel-style configurations
     base_txt += (
+        "STORAGE_DRIVER=file\n"
+        "STORAGE_PATH=storage\n\n"
         "BROADCAST_DRIVER=log\n"
         "CACHE_DRIVER=file\n"
         "QUEUE_CONNECTION=sync\n"
@@ -107,45 +110,44 @@ def generate_config_file(request_jwt: bool = False, request_db: bool = False) ->
         str: Content of the config.py file.
     """
     base_txt = (
-        "from pydantic_settings import BaseSettings\n\n"
+        "import os\n"
+        "from pydantic_settings import BaseSettings, SettingsConfigDict\n\n"
         "class Settings(BaseSettings):\n"
-        "\tAPP_NAME: str = 'FastAPI'\n"
-        "\tAPP_ENV: str = 'development'\n"
-        "\tAPP_DEBUG: bool = True\n"
-        "\tAPP_DESCRIPTION: str = 'This is a FastAPI application.'\n"
-        "\tAPP_VERSION: str = '1.0.0'\n\n"
-        "\tROUTER_PREFIX: str = 'api/v1'\n\n"
+        "\tAPP_NAME: str = os.getenv('APP_NAME', 'FastAPI')\n"
+        "\tAPP_ENV: str = os.getenv('APP_ENV', 'development')\n"
+        "\tAPP_DEBUG: bool = os.getenv('APP_DEBUG', True)\n"
+        "\tAPP_DESCRIPTION: str = os.getenv('APP_DESCRIPTION', 'This is a FastAPI application.')\n"
+        "\tAPP_VERSION: str = os.getenv('APP_VERSION', '1.0.0')\n\n"
+        "\tROUTER_PREFIX: str = os.getenv('ROUTER_PREFIX', 'api/v1')\n\n"
     )
 
     if request_jwt:
         base_txt = (
-            base_txt + "\tJWT_SECRET_KEY: str = 'your_secret_key'\n"
-            "\tJWT_ALGORITHM: str = 'HS256'\n"
-            "\tJWT_ACCESS_TOKEN_EXPIRES: int = 15\n"
-            "\tJWT_REFRESH_TOKEN_EXPIRES: int = 30\n\n"
+            base_txt
+            + "\tJWT_SECRET_KEY: str = os.getenv('JWT_SECRET_KEY', 'your_secret_key')\n"
+            "\tJWT_ALGORITHM: str = os.getenv('JWT_ALGORITHM', 'HS256')\n"
+            "\tJWT_ACCESS_TOKEN_EXPIRES: int = os.getenv('JWT_ACCESS_TOKEN_EXPIRES', 15)\n"
+            "\tJWT_REFRESH_TOKEN_EXPIRES: int = os.getenv('JWT_REFRESH_TOKEN_EXPIRES', 30)\n\n"
         )
 
     if request_db:
         base_txt = (
-            base_txt + "\tDB_CONNECTION: str = 'mysql'\n"
-            "\tDB_HOST: str = 'localhost'\n"
-            "\tDB_PORT: int = 3306\n"
-            "\tDB_DATABASE: str = 'your_database'\n"
-            "\tDB_USERNAME: str = 'root'\n"
-            "\tDB_PASSWORD: str = 'your_password'\n\n"
+            base_txt + "\tDB_CONNECTION: str = os.getenv('DB_CONNECTION', 'mysql')\n"
+            "\tDB_HOST: str = os.getenv('DB_HOST', 'localhost')\n"
+            "\tDB_PORT: int = os.getenv('DB_PORT', 3306)\n"
+            "\tDB_DATABASE: str = os.getenv('DB_DATABASE', 'your_database')\n"
+            "\tDB_USERNAME: str = os.getenv('DB_USERNAME', 'root')\n"
+            "\tDB_PASSWORD: str = os.getenv('DB_PASSWORD', 'your_password')\n\n"
         )
 
     base_txt = (
-        base_txt + "\tBROADCAST_DRIVER: str = 'log'\n"
-        "\tCACHE_DRIVER: str = 'file'\n"
-        "\tQUEUE_CONNECTION: str = 'sync'\n"
-        "\tSESSION_DRIVER: str = 'file'\n"
-        "\tSESSION_LIFETIME: int = 120\n\n"
-        "\tLOG_FILE: str = 'storage/logs/app.log'\n\n"
-        "\tclass Config:\n"
-        "\t\tenv_file = '.env'\n"
-        "\t\tenv_file_encoding = 'utf-8'\n"
-        "\t\tcase_sensitive = True\n\n"
+        base_txt + "\tBROADCAST_DRIVER: str = os.getenv('BROADCAST_DRIVER', 'log')\n"
+        "\tCACHE_DRIVER: str = os.getenv('CACHE_DRIVER', 'file')\n"
+        "\tQUEUE_CONNECTION: str = os.getenv('QUEUE_CONNECTION', 'sync')\n"
+        "\tSESSION_DRIVER: str = os.getenv('SESSION_DRIVER', 'file')\n"
+        "\tSESSION_LIFETIME: int = os.getenv('SESSION_LIFETIME', 120)\n\n"
+        "\tLOG_FILE: str = os.getenv('LOG_FILE', 'storage/logs/app.log')\n\n"
+        "\tmodel_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8', case_sensitive=True)\n\n"
         "settings = Settings()"
     )
 

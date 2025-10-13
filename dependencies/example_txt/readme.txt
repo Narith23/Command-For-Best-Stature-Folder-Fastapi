@@ -18,38 +18,58 @@ It includes environment configuration, dependency management, and a recommended 
 ```
 fastapi-project/
 ├── app/
-│   ├── api/                  # (like Http/Controllers in Laravel)
-│   │   ├── controllers/      # route logic
-│   │   ├── middleware/       # request middleware
-│   │   ├── requests/         # request validation (Pydantic)
-│   │   └── routes/           # route definitions
+│   ├── api/
+│   │   ├── controllers/
+│   │   │   ├── dashboard_controller.py
+│   │   │   └── auth_controller.py
+│   │   ├── middleware/
+│   │   │   └── auth_middleware.py
+│   │   ├── requests/
+│   │   │   └── login_request.py
+│   │   └── routes/
+│   │       ├── web.py
+│   │       └── api.py
 │   │
-│   ├── models/               # SQLAlchemy models (like Laravel Models)
-│   ├── schemas/              # Pydantic schemas (like Laravel FormRequests/DTOs)
-│   ├── services/             # business logic (like Laravel Services)
-│   ├── repositories/         # database queries (like Laravel Repositories)
-│   ├── exceptions/           # custom exceptions
-│   └── providers/            # dependency injection, events (like Laravel Providers)
+│   ├── __init__.py
+│   └── core/
+│       ├── templates.py
+│       └── staticfiles.py
 │
-├── bootstrap/                # startup files (DB init, logging)
-├── config/                   # config files (db, auth, cache…)
-├── database/                 
-│   ├── migrations/           # alembic migrations
-│   ├── seeders/              # seeding data
-│   └── factories/            # faker factories
+├── config/
+│   ├── settings.py
+│   └── database.py
 │
-├── public/                   # static files (CSS, JS, uploads) 
-├── resources/                
-│   ├── views/                # Jinja2 templates (like Laravel Blade)
-│   └── lang/                 # translations
+├── database/
+│   ├── models/
+│   │   └── user_model.py
+│   └── schemas/
+│       └── user_schema.py
 │
-├── routes/                   # main route entry (like Laravel routes/web.php, api.php)
-├── storage/                  # cache, logs, uploads
-├── tests/                    # pytest tests
-├── .env                      # environment variables
-├── main.py                   # app entry (like Laravel artisan serve)
-├── requirements.txt           # (like composer.json)
-└── alembic.ini                # migration config
+├── services/
+│   └── auth_service.py
+│
+├── static/
+│   ├── css/
+│   └── js/
+│
+├── resources/
+│   ├── views/
+│   │   ├── layouts/
+│   │   │   └── base.html
+│   │   ├── dashboard.html
+│   │   └── login.html
+│   └── lang/
+│       └── en.json
+│
+├── storage/
+│   ├── logs/
+│   └── uploads/
+│
+├── main.py
+├── .env
+├── requirements.txt
+└── tests/
+
 ```
 
 ---

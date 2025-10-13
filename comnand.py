@@ -128,6 +128,8 @@ def main() -> None:
         "app/resources/css",
         "app/resources/js",
         "app/resources/views",
+        "app/static/css",
+        "app/static/js",
         "app/services",
         "app/utils",
         "tests",

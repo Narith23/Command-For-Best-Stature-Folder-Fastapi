@@ -48,6 +48,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Serve static files (CSS, JS, images)
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
 # Setup Jinja2 template loader
 templates = Jinja2Templates(directory="app/resources/views")
 

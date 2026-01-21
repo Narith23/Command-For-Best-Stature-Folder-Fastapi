@@ -13,6 +13,7 @@ from dependencies.item_file import (
     generate_gitignore_file,
     generate_logging_file,
     generate_main_file,
+    generate_manage_file,
     generate_rbac_dependency_file,
     generate_readme_file,
     generate_requirements_file,
@@ -141,6 +142,7 @@ def main() -> None:
     # File structure
     files = {
         "README.md": generate_readme_file(),
+        "manage.py": generate_manage_file(),
         "requirements.txt": generate_requirements_file(
             request_db=request_db, request_jwt=request_jwt, db_type=db_type
         ),

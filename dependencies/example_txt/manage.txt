@@ -1,228 +1,196 @@
 import os
-import datetime
-import sys
 import click
-import importlib.util
-
-# ---------------------
-# Migrations Directory
-# ---------------------
-MIGRATIONS_DIR = os.path.join("database", "migrations")
-os.makedirs(MIGRATIONS_DIR, exist_ok=True)
-
-# ---------------------
-# Seeder Directory
-# ---------------------
-SEEDERS_DIR = os.path.join("database", "seeders")
-os.makedirs(SEEDERS_DIR, exist_ok=True)
-
-
-def extract_table_name(migration_name: str) -> str:
-    """
-    Extract the table name from a Laravel-style migration name.
-
-    Examples:
-        create_users_table -> users
-        add_email_to_users_table -> users
-        drop_orders_table -> orders
-    """
-    parts = migration_name.lower().split("_")
-
-    if "create" in parts and "table" in parts:
-        start = parts.index("create") + 1
-        end = parts.index("table")
-        return "_".join(parts[start:end])
-
-    if "add" in parts and "to" in parts:
-        end = parts.index("to")
-        return "_".join(parts[end + 1 :])
-
-    if "drop" in parts and "table" in parts:
-        start = parts.index("drop") + 1
-        end = parts.index("table")
-        return "_".join(parts[start:end])
-
-    # fallback: use the last word
-    return parts[-1]
-
 
 @click.group()
 def cli():
     """FastAPI Laravel-style management commands."""
     pass
 
-
 # ---------------------
-# Create Migration File
+# Create Model File
 # ---------------------
-@cli.command("make:migration")
+@cli.command("make:model")
 @click.argument("name")
-def make_migration(name):
-    """Create a new migration file."""
+def make_model(name):
+    """Create a new SQLAlchemy model file."""
     name = str(name).strip()
-    table_name = extract_table_name(name)
+    class_name = name.title().replace("_", "")
+    file_name = name.lower().replace(" ", "_") + ".py"
+    filepath = os.path.join("app", "db", "models", file_name)
 
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    safe_name = name.lower().replace(" ", "_")
-    filename = f"{timestamp}_{safe_name}.py"
-    filepath = os.path.join(MIGRATIONS_DIR, filename)
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
     template = f'''"""
-Migration: {name}
-Table: {table_name}
-Created: {datetime.datetime.now().isoformat()}
+Model: {class_name}
 """
+from sqlalchemy import Column, Integer, String, DateTime, func
+from app.core.database import Base
 
-from sqlalchemy import Table, Column, Integer, String, DateTime, func, MetaData
-from app.core.database import engine
+class {class_name}(Base):
+    __tablename__ = '{name.lower()}s'  # Pluralized table name
 
-metadata = MetaData()
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), index=True)
 
-def upgrade():
-    """Create or modify table: {table_name}"""
-    # Check if table exists
-    tbl = Table("users", metadata, autoload_with=engine)
-    if tbl.exists():
-        print("⚠️ Table 'users' already exists")
-        return
+    # Add more columns here
+
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    updated_at = Column(DateTime, nullable=True, onupdate=func.now())
+'''
+
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write(template)
+    print(f"✅ Model created: {filepath}")
+
+
+# ---------------------
+# Create Controller File
+# ---------------------
+@cli.command("make:controller")
+@click.argument("name")
+def make_controller(name):
+    """Create a new controller file."""
+    name = str(name).strip()
+    class_name = name.title().replace("_", "") + "Controller"
+    file_name = name.lower().replace(" ", "_") + "_controller.py"
+    filepath = os.path.join("app", "api", "controllers", file_name)
+
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+
+    template = f'''"""
+Controller: {class_name}
+"""
+import logging
+from fastapi import HTTPException
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
+
+logger = logging.getLogger(__name__)
+
+
+class {class_name}:
+    def index(self, db: Session):
+        try:
+            # Logic to list resources
+            return []
         
-    # Example: create table
-    Table(
-        "{table_name}",
-        metadata,
-        Column("id", Integer, primary_key=True),
-        Column("created_at", DateTime, nullable=False, server_default=func.now()),
-        Column("updated_at", DateTime, nullable=True, onupdate=func.now()),
-        extend_existing=True
-    ).create(checkfirst=True, bind=engine)
-    print("✅ Table '{table_name}' created or exists already")
+        except HTTPException:
+            raise
 
-def downgrade():
-    """Rollback changes for table: {table_name}"""
-    tbl = Table("{table_name}", metadata, autoload_with=engine)
-    tbl.drop(checkfirst=True, bind=engine)
-    print("🗑️ Table '{table_name}' dropped if existed")
+        except SQLAlchemyError as e:
+            logger.exception(f"SQLAlchemyError failed with error: {e}")
+            raise HTTPException(status_code=500, detail="Failed to fetch SQLAlchemyError")
+        except Exception as e:
+            logger.exception(f"Unexpected error: {e}")
+            raise HTTPException(status_code=500, detail="Internal Server Error")
+
+    def show(self, db: Session, item_id: int):
+        try:
+            # Logic to show a single resource
+            return {{"id": item_id}}
+        
+        except HTTPException:
+            raise
+
+        except SQLAlchemyError as e:
+            logger.exception(f"SQLAlchemyError failed with error: {e}")
+            raise HTTPException(status_code=500, detail="Failed to fetch SQLAlchemyError")
+        except Exception as e:
+            logger.exception(f"Unexpected error: {e}")
+            raise HTTPException(status_code=500, detail="Internal Server Error")
+
+    def store(self, db: Session, data: dict):
+        try:
+            # Logic to create a new resource
+            return {{"message": "Resource created", "data": data}}
+        
+        except HTTPException:
+            raise
+
+        except SQLAlchemyError as e:
+            db.rollback()
+            logger.exception(f"SQLAlchemyError failed with error: {e}")
+            raise HTTPException(status_code=500, detail="Failed to fetch SQLAlchemyError")
+        except Exception as e:
+            db.rollback()
+            logger.exception(f"Unexpected error: {e}")
+            raise HTTPException(status_code=500, detail="Internal Server Error")
+        
+
+    def update(self, db: Session, item_id: int, data: dict):
+        try:
+            # Logic to update a resource
+            return {{"message": f"Resource {{item_id}} updated", "data": data}}
+        
+        except HTTPException:
+            raise
+
+        except SQLAlchemyError as e:
+            db.rollback()
+            logger.exception(f"SQLAlchemyError failed with error: {e}")
+            raise HTTPException(status_code=500, detail="Failed to fetch SQLAlchemyError")
+        except Exception as e:
+            db.rollback()
+            logger.exception(f"Unexpected error: {e}")
+            raise HTTPException(status_code=500, detail="Internal Server Error")
+        
+
+    def destroy(self, db: Session, item_id: int):
+        try:
+            # Logic to delete a resource
+            return {{"message": f"Resource {{item_id}} deleted"}}
+        
+        except HTTPException:
+            raise
+
+        except SQLAlchemyError as e:
+            db.rollback()
+            logger.exception(f"SQLAlchemyError failed with error: {e}")
+            raise HTTPException(status_code=500, detail="Failed to fetch SQLAlchemyError")
+        except Exception as e:
+            db.rollback()
+            logger.exception(f"Unexpected error: {e}")
+            raise HTTPException(status_code=500, detail="Internal Server Error")
 '''
 
     with open(filepath, "w", encoding="utf-8") as f:
         f.write(template)
-    print(f"✅ Migration created: {filepath}")
+    print(f"✅ Controller created: {filepath}")
 
 
 # ---------------------
-# Run Migrations
+# Create Request (Schema) File
 # ---------------------
-@cli.command("migrate")
-def migrate():
-    """Run all migrations (execute upgrade() functions)."""
-    confirm = input("⚠️ This will create/update all tables. Continue? (y/n): ")
-    if confirm.lower() != "y":
-        print("❌ Cancelled")
-        return
-
-    # Sort files to run in chronological order
-    files = sorted(os.listdir(MIGRATIONS_DIR))
-    for file in files:
-        if file.endswith(".py"):
-            path = os.path.join(MIGRATIONS_DIR, file)
-            spec = importlib.util.spec_from_file_location("migration", path)
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
-
-            if hasattr(module, "upgrade"):
-                print(f"📦 Running migration: {file}")
-                try:
-                    module.upgrade()
-                except Exception as e:
-                    print(f"❌ Failed migration {file}: {e}")
-                    sys.exit(1)
-    print("✅ All migrations executed successfully")
-
-
-# ---------------------
-# Create Seeders File
-# ---------------------
-@cli.command("make:seeder")
+@cli.command("make:request")
 @click.argument("name")
-def make_seeder(name):
-    """Create a new seeder file."""
+def make_request(name):
+    """Create a new Pydantic schema for request validation."""
     name = str(name).strip()
-    seeder_name = (
-        name.title().replace("_", "") + "Seeder"
-    )  # Convert to PascalCaseSeeder
+    class_name = name.title().replace("_", "") + "Request"
+    file_name = name.lower().replace(" ", "_") + "_request.py"
+    filepath = os.path.join("app", "api", "schemas", file_name)
 
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"{timestamp}_{seeder_name}.py"
-    filepath = os.path.join(SEEDERS_DIR, filename)
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
     template = f'''"""
-Seeder: {seeder_name}
-Created: {datetime.datetime.now().isoformat()}
+Request Schema: {class_name}
 """
 
-from app.core.database import SessionLocal
+from pydantic import BaseModel, ConfigDict, Field
+from typing import Optional
 
-def run():
-    db = SessionLocal()
-    try:
-        # TODO: Add your seeding logic here
-        print("🌱 Running seeder: {seeder_name}")
+class {class_name}(BaseModel):
+    name: str = Field(..., min_length=3, max_length=50)
+    description: Optional[str] = None
 
-        # Example:
-        # user = User(first_name="Admin", email="admin@example.com", username="admin", password="secret")
-        # db.add(user)
-        # db.commit()
-
-    finally:
-        db.close()
-    print("✅ Seeder {seeder_name} executed")
+    model_config = ConfigDict(from_attributes=True)
 '''
 
     with open(filepath, "w", encoding="utf-8") as f:
         f.write(template)
-    print(f"✅ Seeder created: {filepath}")
-
-
-# ---------------------
-# Run All Seeders
-# ---------------------
-@cli.command("db:seed")
-@click.option(
-    "--class_", "class_name", default=None, help="Seeder class to run (e.g. UserSeeder)"
-)
-def db_seed(class_name):
-    """Run seeders (all or specific)."""
-    confirm = input("⚠️ This will insert seed data. Continue? (y/n): ")
-    if confirm.lower() != "y":
-        print("❌ Cancelled")
-        return
-
-    files = sorted(os.listdir(SEEDERS_DIR))
-    for file in files:
-        if not file.endswith(".py"):
-            continue
-
-        path = os.path.join(SEEDERS_DIR, file)
-        spec = importlib.util.spec_from_file_location("seeder", path)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-
-        if hasattr(module, "run"):
-            seeder_name = os.path.splitext(file)[0].split("_", 1)[1]  # e.g. UserSeeder
-            if class_name and not seeder_name.lower().startswith(class_name.lower()):
-                continue  # skip non-matching seeders
-
-            print(f"📦 Running seeder: {file}")
-            try:
-                module.run()
-            except Exception as e:
-                print(f"❌ Failed seeder {file}: {e}")
-                sys.exit(1)
-
-            if class_name:  # if only one seeder, stop after running it
-                break
-    print("✅ Seeder(s) executed successfully")
+    print(f"✅ Request schema created: {filepath}")
 
 
 if __name__ == "__main__":
     cli()
+

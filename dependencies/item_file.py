@@ -117,7 +117,8 @@ def generate_config_file(request_jwt: bool = False, request_db: bool = False) ->
         "\tAPP_ENV: str = os.getenv('APP_ENV', 'development')\n"
         "\tAPP_DEBUG: bool = os.getenv('APP_DEBUG', True)\n"
         "\tAPP_DESCRIPTION: str = os.getenv('APP_DESCRIPTION', 'This is a FastAPI application.')\n"
-        "\tAPP_VERSION: str = os.getenv('APP_VERSION', '1.0.0')\n\n"
+        "\tAPP_VERSION: str = os.getenv('APP_VERSION', '1.0.0')\n"
+        "\tAPP_URL: str = os.getenv('APP_URL', 'http://localhost:8000')\n\n"
         "\tROUTER_PREFIX: str = os.getenv('ROUTER_PREFIX', 'api/v1')\n\n"
     )
 
@@ -146,6 +147,8 @@ def generate_config_file(request_jwt: bool = False, request_db: bool = False) ->
         "\tQUEUE_CONNECTION: str = os.getenv('QUEUE_CONNECTION', 'sync')\n"
         "\tSESSION_DRIVER: str = os.getenv('SESSION_DRIVER', 'file')\n"
         "\tSESSION_LIFETIME: int = os.getenv('SESSION_LIFETIME', 120)\n\n"
+        "\tSTORAGE_DRIVER: str = os.getenv('STORAGE_DRIVER', 'file')\n"
+        "\tSTORAGE_PATH: str = os.getenv('STORAGE_PATH', 'storage')\n"
         "\tLOG_FILE: str = os.getenv('LOG_FILE', 'storage/logs/app.log')\n\n"
         "\tmodel_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8', case_sensitive=True)\n\n"
         "settings = Settings()"

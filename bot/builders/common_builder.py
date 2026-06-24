@@ -447,6 +447,36 @@ Example response:
   "errors": {{}}
 }}
 ```
+
+For paginated list data:
+
+```python
+response_model=PaginatedApiResponse[ItemResource]
+```
+
+Example pagination response:
+
+```json
+{{
+  "success": true,
+  "message": "Items fetched successfully",
+  "data": [
+    {{
+      "id": 1,
+      "name": "Sample Item",
+      "description": "Laravel-style FastAPI item"
+    }}
+  ],
+  "meta": {{
+    "page": 1,
+    "per_page": 10,
+    "total": 100,
+    "total_pages": 10
+  }},
+  "timestamp": "2026-06-24T04:06:47.964Z",
+  "errors": {{}}
+}}
+```
 """,
         overwrite=True,
     )
